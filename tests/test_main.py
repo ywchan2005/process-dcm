@@ -107,6 +107,7 @@ def test_main(md5: list[str], meta: str, keep: str, key: str, janitor: list[str]
             "--overwrite",
             "--keep",
             keep,
+            "--no_preserve_folder_structure",
         ]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
@@ -129,7 +130,7 @@ def test_main_group(janitor: list[str], runner: CliRunner) -> None:
     janitor.append("study_2_patient_2.csv")
     with TemporaryDirectory() as tmpdirname:
         output_dir = Path(tmpdirname)
-        args = ["tests", "-o", tmpdirname, "-k", "gD", "-g"]
+        args = ["tests", "-o", tmpdirname, "-k", "gD", "-g", "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
         assert "Found DICOMDIR file at tests/DICOMDIR" in result.output
@@ -151,7 +152,7 @@ def test_main_group(janitor: list[str], runner: CliRunner) -> None:
 
 def test_main_dummy(janitor: list[str], runner: CliRunner) -> None:
     janitor.append("dummy_dir")
-    args = ["tests/dummy_ex", "-o", "dummy_dir", "-k", "p"]
+    args = ["tests/dummy_ex", "-o", "dummy_dir", "-k", "p", "--no_preserve_folder_structure"]
     result = runner.invoke(app, args)
     assert result.exit_code == 0
     tof = sorted(glob("dummy_dir/**/*"))
@@ -238,7 +239,7 @@ def test_main_optos_fa(janitor: list[str], runner: CliRunner) -> None:
     with TemporaryDirectory() as tmpdirname:
         output_dir = Path(tmpdirname)
         input_path = "tests/optos_fa/"
-        args = [input_path, "-o", tmpdirname, "-k", "pndg"]
+        args = [input_path, "-o", tmpdirname, "-k", "pndg", "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
         of = sorted(glob(f"{output_dir}/**/*"))
@@ -251,14 +252,14 @@ def test_main_optos_fa(janitor: list[str], runner: CliRunner) -> None:
 
 def test_same_time(runner: CliRunner) -> None:
     with TemporaryDirectory() as tmpdirname:
-        args = ["tests/same-time", "-gk", "pndg", "-t", "0.0", "-o", tmpdirname]
+        args = ["tests/same-time", "-gk", "pndg", "-t", "0.0", "-o", tmpdirname, "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
         assert "WARN: Number of groups (2) differs from processed (1)" in result.output
-        args = ["tests/same-time", "-rgk", "pndg", "-t", "1", "-o", tmpdirname]
+        args = ["tests/same-time", "-rgk", "pndg", "-t", "1", "-o", tmpdirname, "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
-        args = ["tests/same-time", "-rk", "pndg", "-t", "1", "-o", tmpdirname]
+        args = ["tests/same-time", "-rk", "pndg", "-t", "1", "-o", tmpdirname, "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert "'--tol' option can only be used when '--group' is set." in result.output
 
@@ -266,7 +267,7 @@ def test_same_time(runner: CliRunner) -> None:
 def test_optomap(runner: CliRunner) -> None:
     with TemporaryDirectory() as tmpdirname:
         output_dir = Path(tmpdirname)
-        args = ["tests/rg_optomap/example.dcm", "-k", "pndg", "-o", tmpdirname]
+        args = ["tests/rg_optomap/example.dcm", "-k", "pndg", "-o", tmpdirname, "--no_preserve_folder_structure"]
         result = runner.invoke(app, args)
         assert result.exit_code == 0
         md5 = get_md5(output_dir / "252-1052__4eb9d4_OS_PCUWF.DCM/PCUWF-0_0.png")

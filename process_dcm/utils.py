@@ -339,8 +339,30 @@ def group_dcms_by_acquisition_time(dcms: list[FileDataset], tol: float = 2) -> d
     return grouped_dcms
 
 
+def get_output_directory(
+    dcm_obj: FileDataset,
+    input_path: Path,
+    output_dir: Path,
+    time_group: bool,
+    preserve_folder_structure: bool,
+) -> Path:
+    """Get the output directory for a DICOM file."""
+    if not preserve_folder_structure:
+        date_tag = do_date(dcm_obj.get("AcquisitionDateTime", "00000000"), "%Y%m%d%H%M%S.%f", "%Y%m%d_%H%M%S")
+        if not time_group:
+            ref = hex_hash(dcm_obj.get("FrameOfReferenceUID", "0"))
+            date_tag = f"{do_date(dcm_obj.get('AcquisitionDateTime', '00000000'), '%Y%m%d%H%M%S.%f', '%Y%m%d_%H%M%S')}_{ref}"
+        lat = dict_eye.get(dcm_obj.get("ImageLaterality", dcm_obj.get("Laterality")), "OU")
+        target_dir = output_dir / f"{dcm_obj.PatientID}_{date_tag}_{lat}_{dcm_obj.Modality.code}.DCM"
+        return target_dir
+    else:
+        target_dir = output_dir / os.path.relpath(str(dcm_obj.ReferencedFileID.parent), str(input_path))
+        return target_dir
+
+
 def process_dcm_images(
     dcm_objs: list[FileDataset],
+    input_path: Path,
     output_dir: Path,
     image_format: str,
     mapping: str,
@@ -348,15 +370,10 @@ def process_dcm_images(
     overwrite: bool = False,
     quiet: bool = False,
     time_group: bool = False,
+    preserve_folder_structure: bool = True,
 ) -> str:
     """Processes DICOM images and saves them to a directory."""
-    d0 = dcm_objs[0]
-    date_tag = do_date(d0.get("AcquisitionDateTime", "00000000"), "%Y%m%d%H%M%S.%f", "%Y%m%d_%H%M%S")
-    if not time_group:
-        ref = hex_hash(d0.get("FrameOfReferenceUID", "0"))
-        date_tag = f"{do_date(d0.get('AcquisitionDateTime', '00000000'), '%Y%m%d%H%M%S.%f', '%Y%m%d_%H%M%S')}_{ref}"
-    lat = dict_eye.get(d0.get("ImageLaterality", d0.get("Laterality")), "OU")
-    target_dir = output_dir / f"{d0.PatientID}_{date_tag}_{lat}_{d0.Modality.code}.DCM"
+    target_dir = get_output_directory(dcm_objs[0], input_path, output_dir, time_group, preserve_folder_structure)
 
     if overwrite:
         shutil.rmtree(target_dir, ignore_errors=True)
@@ -432,6 +449,7 @@ def process_dcm(
     time_group: bool = False,
     tol: float = 2,
     n_jobs: int = 1,
+    preserve_folder_structure: bool = True,
 ) -> tuple[int, int, list[tuple[str, str]]]:
     """Process DICOM files from the input directory and save images in a specified format.
 
@@ -456,6 +474,8 @@ def process_dcm(
                                      Defaults to False.
         tol (float, optional): Time tolerance in seconds for grouping DICOM files by AcquisitionDateTime. Defaults to 2.
         n_jobs (int, optional): The number of parallel jobs to utilize for processing. Defaults to 1.
+        preserve_folder_structure (bool, optional): Flag to control whether to preserve the folder structure.
+                                                    Defaults to True.
 
     Returns:
         tuple[int, int, list[tuple[str, str]]]: A tuple containing the number of processed files, the number of errors,
@@ -534,6 +554,7 @@ def process_dcm(
 
         res = process_dcm_images(
             dcm_objs=dcms,
+            input_path=input_path,
             output_dir=output_dir,
             image_format=image_format,
             mapping=mapping,
@@ -541,6 +562,7 @@ def process_dcm(
             overwrite=overwrite,
             quiet=quiet,
             time_group=time_group,
+            preserve_folder_structure=preserve_folder_structure,
         )
         return res, (new_patient_key, patient_id)
 
