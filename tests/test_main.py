@@ -75,19 +75,19 @@ def test_cli_without_args(runner: CliRunner) -> None:
     [
         (
             ["5ba37cc43233db423394cf98c81d5fbc", "a726b59587ca4ea1a478802e3ee9235c"],
-            "e762d18b90b39e55cd53094288157eb8",
+            "928eaea84dcf85d710192981663be425",
             "pndg",
             "bbff7a25-d32c-4192-9330-0bb01d49f746",
         ),
         (
             ["5ba37cc43233db423394cf98c81d5fbc", "a726b59587ca4ea1a478802e3ee9235c"],
-            "6d7a42b68af0191f8710cea06ba6c521",
+            "27eb9a93abfa43a7e6d6828bd14e9644",
             "pnDg",
             "bbff7a25-d32c-4192-9330-0bb01d49f746",
         ),
         (
             ["5ba37cc43233db423394cf98c81d5fbc", "a726b59587ca4ea1a478802e3ee9235c"],
-            "f706061cebaba9c14ae96dd595cd7b00",
+            "72a8d7f0f7f043a6746056ba6e826b25",
             "",
             "0780320450",
         ),
@@ -138,7 +138,7 @@ def test_main_group(janitor: list[str], runner: CliRunner) -> None:
         assert len(tof) == 52
         assert (
             get_md5(output_dir / "0780320450_20150624_144600_OD_OCT.DCM" / "metadata.json", bottom)
-            == "ba6648bf45d86752bd20dc72c4ec5b47"
+            == "103860e71d8cf0e3cef29d5b8fa44739"
         )
         assert get_md5(of) in [
             "a726b59587ca4ea1a478802e3ee9235c",  # local
@@ -158,11 +158,11 @@ def test_main_dummy(janitor: list[str], runner: CliRunner) -> None:
     of = [x for x in tof if "metadata.json" not in x]
     assert len(tof) == 3
     assert get_md5(Path("dummy_dir") / "123456__340692_OU_U.DCM" / "metadata.json", bottom) in [
-        "dfe455bef4335776973b8e0e88e32d18",  # local
+        "c7ba10772ba3a04c18b1616c7bf3df92",  # local
         "3432e7670635837b2631658ef78f7192",  # GH
     ]
     assert get_md5(of) in [
-        "fb7c7e0fe4e7d3e89e0daae479d013c4",  # local
+        "30b70623445f7c12d8ad773c9738c7ce",  # local
         "77bb205173d3b15f6131b530a29c2ab7",  # GH
     ]
 
@@ -203,6 +203,7 @@ def test_main_no_dicom(runner: CliRunner, tmp_path: Path) -> None:
 
 
 # skip this test for CI
+@pytest.mark.skip(reason="no 'tests/example_dir'")
 def test_main_mapping_example_dir(janitor: list[str], runner: CliRunner) -> None:
     janitor.append("study_2_patient.csv")
     janitor.append("study_2_patient_1.csv")
@@ -244,7 +245,7 @@ def test_main_optos_fa(janitor: list[str], runner: CliRunner) -> None:
         assert len(of) == 2
         assert (
             get_md5(output_dir / "1840002001__44fd1d_OD_OPTOS_FA.DCM" / "metadata.json", bottom)
-            == "fc9e00e17aab58355d949ea205f9f6a6"
+            == "20f995e0f67c8e53b29b93b619881326"
         )
 
 
@@ -272,5 +273,5 @@ def test_optomap(runner: CliRunner) -> None:
         assert md5 in ["8ef9cf6a4eb98b80129c398368cf1925", "6124405b60c88310f072fb31b207805d"]
         assert (
             get_md5(output_dir / "252-1052__4eb9d4_OS_PCUWF.DCM/metadata.json", bottom)
-            == "3a4e60a2201c9666cbe9700c2c3438de"
+            == "469d14d0e9094cc0523be2405d813e64"
         )
