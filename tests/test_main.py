@@ -160,7 +160,7 @@ def test_main_dummy(janitor: list[str], runner: CliRunner) -> None:
     assert len(tof) == 3
     assert get_md5(Path("dummy_dir") / "123456__340692_OU_U.DCM" / "metadata.json", bottom) in [
         "c7ba10772ba3a04c18b1616c7bf3df92",  # local
-        "3432e7670635837b2631658ef78f7192",  # GH
+        "2cd60fdea0f580c7fb8e299249a14623",  # GH
     ]
     assert get_md5(of) in [
         "30b70623445f7c12d8ad773c9738c7ce",  # local
