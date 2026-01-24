@@ -257,7 +257,10 @@ def update_modality(dcm: FileDataset) -> bool:
         dcm.Modality = ImageModality.OCT
     elif dcm.Modality == "OP":
         if dcm.Manufacturer.upper() == "TOPCON":
-            dcm.Modality = ImageModality.COLOUR_PHOTO
+            if " IR" in dcm.get("SeriesDescription", ""):
+                dcm.Modality = ImageModality.INFRARED_PHOTO
+            else:
+                dcm.Modality = ImageModality.COLOUR_PHOTO
         elif dcm.Manufacturer.upper() == "OPTOS":
             if dcm.get("HorizontalFieldOfView", 0) == 200:
                 dcm.Modality = ImageModality.PSEUDOCOLOUR_ULTRAWIDEFIELD  # no cov AWSS
