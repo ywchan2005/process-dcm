@@ -139,9 +139,14 @@ def meta_images(dcm_obj: FileDataset) -> dict:
                 oo = ii.get("OphthalmicFrameLocationSequence")
                 if oo:
                     cc = ii.OphthalmicFrameLocationSequence[0].ReferenceCoordinates
-                    meta["contents"].append(
-                        {"photo_locations": [{"start": {"x": cc[1], "y": cc[0]}, "end": {"x": cc[3], "y": cc[2]}}]}
-                    )
+                    if len(cc) == 4:
+                        meta["contents"].append(
+                            {"photo_locations": [{"start": {"x": cc[1], "y": cc[0]}, "end": {"x": cc[3], "y": cc[2]}}]}
+                        )
+                    else:
+                        meta["contents"].append(
+                            {"photo_locations": [{"start": {"x": cc[i + 1], "y": cc[i]}} for i in range(0, min(len(cc), 8), 2)]}
+                        )
                 else:
                     typer.secho("\nWARN: empty photo_locations", fg=typer.colors.RED)
                     meta["contents"].append({"photo_locations": []})
