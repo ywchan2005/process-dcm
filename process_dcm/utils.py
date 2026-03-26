@@ -261,7 +261,7 @@ def update_modality(dcm: FileDataset) -> bool:
     elif dcm.Modality == "OPT":
         dcm.Modality = ImageModality.OCT
     elif dcm.Modality == "OP":
-        if dcm.Manufacturer.upper() == "TOPCON":
+        if (dcm.Manufacturer.upper() == "TOPCON") or (dcm.get("ManufacturerModelName").upper() == "TRITON"):
             if " IR" in dcm.get("SeriesDescription", ""):
                 dcm.Modality = ImageModality.INFRARED_PHOTO
             else:
