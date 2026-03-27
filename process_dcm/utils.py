@@ -269,12 +269,19 @@ def update_modality(dcm: FileDataset) -> bool:
         elif dcm.Manufacturer.upper() == "OPTOS":
             if dcm.get("HorizontalFieldOfView", 0) == 200:
                 dcm.Modality = ImageModality.PSEUDOCOLOUR_ULTRAWIDEFIELD  # no cov AWSS
-            elif "FA " in dcm.get("SeriesDescription", "") and any(
+            elif ("FA " in dcm.get("SeriesDescription", "") and any(
                 "Fluorescein" in str(item) for item in dcm.get("ContrastBolusAgentSequence", [])
-            ):
+            )) or ("FA" in dcm.ImageType):
                 dcm.Modality = ImageModality.OPTOS_FA
-            elif "RG OPTOMAP" in dcm.get("SeriesDescription", "").upper():
+            elif ("RG OPTOMAP" in dcm.get("SeriesDescription", "").upper()) or ("OPTOMAPPLUS RG" in dcm.ImageType):
                 dcm.Modality = ImageModality.PSEUDOCOLOUR_ULTRAWIDEFIELD
+            elif ("OPTOMAPPLUS ICG" in dcm.ImageType):
+                dcm.Modality = ImageModality.OPTOS_ICGA
+            elif ("OPTOMAPPLUS AF" in dcm.ImageType):
+                if ("RED" in dcm.ImageType):
+                    dcm.Modality = ImageModality.OPTOS_AF_IR
+                else:
+                    dcm.Modality = ImageModality.UNKNOWN_ULTRAWIDEFIELD
             elif "OPTOMAP" in dcm.get("SeriesDescription", "").upper():
                 dcm.Modality = ImageModality.UNKNOWN_ULTRAWIDEFIELD
             else:
