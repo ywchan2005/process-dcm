@@ -5,6 +5,7 @@ import filecmp
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 import warnings
@@ -41,6 +42,8 @@ def do_date(date_str: str, input_format: str, output_format: str) -> str:
     """Convert DCM datetime strings to metadata.json string format."""
     if "." not in date_str:
         input_format = input_format.split(".")[0]
+    if "+" in date_str:
+        date_str = re.sub('\+[0-9]+$', '', date_str)
     try:
         dt = datetime.strptime(date_str, input_format)
         return dt.strftime(output_format)
@@ -336,6 +339,8 @@ def group_dcms_by_acquisition_time(dcms: list[FileDataset], tol: float = 2) -> d
     grouped_dcms: dict[str, list[FileDataset]] = defaultdict(list)
 
     def parse_datetime(dt_str: str) -> datetime:
+        if '+' in dt_str:
+            dt_str = re.sub('\+[0-9]+$', '', dt_str)
         try:
             return datetime.strptime(dt_str, "%Y%m%d%H%M%S.%f")
         except ValueError:
