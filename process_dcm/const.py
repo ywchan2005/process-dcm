@@ -77,6 +77,8 @@ class ImageModality(Enum):
     )
 
     OPTOS_FA = ("OPTOS_FA", "Optos Ultra-Widefield FA", ModalityFlag.IS_2D_IMAGE | ModalityFlag.IS_INTERIOR)
+    OPTOS_AF_IR = ("OPTOS_AF_IR", "Optos Ultra-Widefield AF - Infrared", ModalityFlag.IS_2D_IMAGE | ModalityFlag.IS_INTERIOR)
+    OPTOS_ICGA = ("OPTOS_ICGA", "Optos Ultra-Widefield ICGA", ModalityFlag.IS_2D_IMAGE | ModalityFlag.IS_INTERIOR)
 
     UNKNOWN_ULTRAWIDEFIELD = (
         "OUWF",
