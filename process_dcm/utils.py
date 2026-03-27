@@ -389,7 +389,8 @@ def get_output_directory(
         target_dir = output_dir / f"{dcm_obj.PatientID}_{date_tag}_{lat}_{dcm_obj.Modality.code}.DCM"
         return target_dir
     else:
-        target_dir = output_dir / os.path.relpath(str(dcm_obj.ReferencedFileID.parent), str(input_path))
+        relpath = os.path.relpath(str(dcm_obj.ReferencedFileID), str(input_path))
+        target_dir = output_dir / Path(relpath).parent / Path(relpath).stem
         return target_dir
 
 
