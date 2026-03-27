@@ -286,6 +286,19 @@ def update_modality(dcm: FileDataset) -> bool:
                 dcm.Modality = ImageModality.UNKNOWN_ULTRAWIDEFIELD
             else:
                 dcm.Modality = ImageModality.UNKNOWN
+        elif "ZEISS" in dcm.Manufacturer.upper():
+            if ("COLOR" in dcm.ImageType):
+                dcm.Modality = ImageModality.COLOUR_PHOTO
+            elif ("FA" in dcm.ImageType):
+                dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
+            elif ("FAFGREEN" in dcm.ImageType):
+                dcm.Modality = ImageModality.AUTOFLUORESCENCE_GREEN
+            elif ("FAFBLUE" in dcm.ImageType):
+                dcm.Modality = ImageModality.AUTOFLUORESCENCE_BLUE
+            elif ("IR" in dcm.ImageType):
+                dcm.Modality = ImageModality.SLO_INFRARED
+            else:
+                dcm.Modality = ImageModality.UNKNOWN
         elif " IR" in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.SLO_INFRARED
         elif " BAF " in dcm.get("SeriesDescription", ""):
