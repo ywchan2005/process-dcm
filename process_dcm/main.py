@@ -69,6 +69,11 @@ def main(
         "-p",
         help="Preserve folder structure in the output directory.",
     ),
+    relative_source_file: bool = typer.Option(
+        False,
+        "--relative_source_file/--no_relative_source_file",
+        help="Preserve folder structure in the output directory.",
+    ),
     overwrite: bool = typer.Option(False, "-w", "--overwrite", help="Overwrite existing images if found."),
     reset: bool = typer.Option(False, "-r", "--reset", help="Reset the output directory if it exists."),
     quiet: bool = typer.Option(False, "-q", "--quiet", help="Silence verbosity."),
@@ -128,6 +133,7 @@ def main(
         tol=tol,
         n_jobs=n_jobs,
         preserve_folder_structure=preserve_folder_structure,
+        relative_source_file=relative_source_file,
     )
 
     total = processed + skipped

@@ -80,11 +80,13 @@ def set_output_dir(ref_path: str | Path, a_path: str | Path) -> str:
         return os.path.join(ref_path, path_obj.as_posix())
 
 
-def meta_images(dcm_obj: FileDataset) -> dict:
+def meta_images(dcm_obj: FileDataset, input_path: Path, relative_source_file: bool) -> dict:
     """Takes a DICOM file dataset and extracts metadata from it to create a dictionary of image metadata.
 
     Args:
         dcm_obj (FileDataset): The input DICOM file dataset object.
+        input_path (Path): The path to a DCM file or a folder containing DICOM files to be processed.
+        relative_source_file (bool): Store source file as relative to inpt path or not.
 
     Returns:
         dict: A dictionary containing the extracted metadata from the input DICOM file dataset.
@@ -103,7 +105,10 @@ def meta_images(dcm_obj: FileDataset) -> dict:
     # Add relative path to source DICOM file if available
     if hasattr(dcm_obj, "ReferencedFileID"):
         # Store as string, relative to the output directory (target_dir)
-        meta["source_file"] = os.path.relpath(str(dcm_obj.ReferencedFileID), os.getcwd())  # pyright: ignore[reportArgumentType]
+        if not input_path.is_file() and relative_source_file:
+            meta["source_file"] = str(dcm_obj.ReferencedFileID.relative_to(input_path))
+        else:
+            meta["source_file"] = str(dcm_obj.ReferencedFileID)
     else:
         meta["source_file"] = None  # pyright: ignore[reportArgumentType]
 
@@ -157,7 +162,14 @@ def meta_images(dcm_obj: FileDataset) -> dict:
     return meta
 
 
-def process_dcm_meta(dcm_objs: list[FileDataset], output_dir: Path, mapping: str = "", keep: str = "") -> None:
+def process_dcm_meta(
+    dcm_objs: list[FileDataset],
+    input_path: Path,
+    output_dir: Path,
+    mapping: str = "",
+    keep: str = "",
+    relative_source_file: bool = True
+) -> None:
     """Extract and save metadata from a list of DICOM files into a JSON file.
 
     Args:
@@ -169,6 +181,7 @@ def process_dcm_meta(dcm_objs: list[FileDataset], output_dir: Path, mapping: str
         keep (str, optional): String containing the letters indicating which fields to keep.
                               Options: 'p' for patient key, 'n' for patient names, 'd' for precise date of birth,
                               'D' for anonymized date of birth (year only), and 'g' for gender. Defaults to "".
+        relative_source_file (bool, optional): Flag to control whether to stre source file as relative to input path or not
     """
     meta_file = output_dir / "metadata.json"
     metadata: dict = defaultdict(dict)
@@ -237,7 +250,7 @@ def process_dcm_meta(dcm_objs: list[FileDataset], output_dir: Path, mapping: str
         metadata["series"]["anterior"] = ""  # bool
         metadata["series"]["protocol"] = dcm_obj.get("SeriesDescription")  # Guessing, "Rectangular volume"
         metadata["series"]["source_id"] = dcm_obj.get("FrameOfReferenceUID")
-        metadata["images"]["images"].append(meta_images(dcm_obj))
+        metadata["images"]["images"].append(meta_images(dcm_obj, input_path, relative_source_file))
     if len(dcm_objs) > 1:
         metadata["series"]["protocol"] = "OCT ART Volume"
 
@@ -389,8 +402,8 @@ def get_output_directory(
         target_dir = output_dir / f"{dcm_obj.PatientID}_{date_tag}_{lat}_{dcm_obj.Modality.code}.DCM"
         return target_dir
     else:
-        relpath = os.path.relpath(str(dcm_obj.ReferencedFileID), str(input_path))
-        target_dir = output_dir / Path(relpath).parent / Path(relpath).stem
+        relpath = dcm_obj.ReferencedFileID.relative_to(input_path)
+        target_dir = output_dir / relpath.parent / relpath.stem
         return target_dir
 
 
@@ -405,6 +418,7 @@ def process_dcm_images(
     quiet: bool = False,
     time_group: bool = False,
     preserve_folder_structure: bool = True,
+    relative_source_file: bool = False,
 ) -> str:
     """Processes DICOM images and saves them to a directory."""
     target_dir = get_output_directory(dcm_objs[0], input_path, output_dir, time_group, preserve_folder_structure)
@@ -450,7 +464,14 @@ def process_dcm_images(
 
             image = Image.fromarray(array)
             image.save(out_img)
-    process_dcm_meta(dcm_objs=dcm_objs, output_dir=target_dir, mapping=mapping, keep=keep)
+    process_dcm_meta(
+        dcm_objs=dcm_objs,
+        input_path=input_path,
+        output_dir=target_dir,
+        mapping=mapping,
+        keep=keep,
+        relative_source_file=relative_source_file
+    )
     return "processed"
 
 
@@ -484,6 +505,7 @@ def process_dcm(
     tol: float = 2,
     n_jobs: int = 1,
     preserve_folder_structure: bool = True,
+    relative_source_file: bool = False,
 ) -> tuple[int, int, list[tuple[str, str]]]:
     """Process DICOM files from the input directory and save images in a specified format.
 
@@ -510,6 +532,7 @@ def process_dcm(
         n_jobs (int, optional): The number of parallel jobs to utilize for processing. Defaults to 1.
         preserve_folder_structure (bool, optional): Flag to control whether to preserve the folder structure.
                                                     Defaults to True.
+        relative_source_file (bool, optional): Flag to control whether to stre source file as relative to input path or not
 
     Returns:
         tuple[int, int, list[tuple[str, str]]]: A tuple containing the number of processed files, the number of errors,
@@ -597,6 +620,7 @@ def process_dcm(
             quiet=quiet,
             time_group=time_group,
             preserve_folder_structure=preserve_folder_structure,
+            relative_source_file=relative_source_file,
         )
         return res, (new_patient_key, patient_id)
 
