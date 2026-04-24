@@ -391,6 +391,7 @@ def get_output_directory(
     output_dir: Path,
     time_group: bool,
     preserve_folder_structure: bool,
+    keep_dcm_name_as_folder: bool,
 ) -> Path:
     """Get the output directory for a DICOM file."""
     if not preserve_folder_structure:
@@ -403,7 +404,10 @@ def get_output_directory(
         return target_dir
     else:
         relpath = dcm_obj.ReferencedFileID.relative_to(input_path)
-        target_dir = output_dir / relpath.parent / relpath.stem
+        if keep_dcm_name_as_folder:
+            target_dir = output_dir / relpath.parent / relpath.stem
+        else:
+            target_dir = output_dir / relpath.parent
         return target_dir
 
 
@@ -418,10 +422,11 @@ def process_dcm_images(
     quiet: bool = False,
     time_group: bool = False,
     preserve_folder_structure: bool = True,
+    keep_dcm_name_as_folder: bool = True,
     relative_source_file: bool = False,
 ) -> str:
     """Processes DICOM images and saves them to a directory."""
-    target_dir = get_output_directory(dcm_objs[0], input_path, output_dir, time_group, preserve_folder_structure)
+    target_dir = get_output_directory(dcm_objs[0], input_path, output_dir, time_group, preserve_folder_structure, keep_dcm_name_as_folder)
 
     if overwrite:
         shutil.rmtree(target_dir, ignore_errors=True)
@@ -505,6 +510,7 @@ def process_dcm(
     tol: float = 2,
     n_jobs: int = 1,
     preserve_folder_structure: bool = True,
+    keep_dcm_name_as_folder: bool = True,
     relative_source_file: bool = False,
 ) -> tuple[int, int, list[tuple[str, str]]]:
     """Process DICOM files from the input directory and save images in a specified format.
@@ -532,6 +538,8 @@ def process_dcm(
         n_jobs (int, optional): The number of parallel jobs to utilize for processing. Defaults to 1.
         preserve_folder_structure (bool, optional): Flag to control whether to preserve the folder structure.
                                                     Defaults to True.
+        keep_dcm_name_as_folder (bool, optional): Flag to control whether to store files in a folder named the same as the
+                                                  DCM. Defaults to True.
         relative_source_file (bool, optional): Flag to control whether to stre source file as relative to input path or not
 
     Returns:
@@ -620,6 +628,7 @@ def process_dcm(
             quiet=quiet,
             time_group=time_group,
             preserve_folder_structure=preserve_folder_structure,
+            keep_dcm_name_as_folder=keep_dcm_name_as_folder,
             relative_source_file=relative_source_file,
         )
         return res, (new_patient_key, patient_id)

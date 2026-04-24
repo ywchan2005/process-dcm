@@ -69,6 +69,11 @@ def main(
         "-p",
         help="Preserve folder structure in the output directory.",
     ),
+    keep_dcm_name_as_folder: bool = typer.Option(
+        True,
+        "--keep_dcm_name_as_folder/--no_keep_dcm_name_as_folder",
+        help="Store extracted files in a folder named the same as the DCM.",
+    ),
     relative_source_file: bool = typer.Option(
         False,
         "--relative_source_file/--no_relative_source_file",
@@ -115,9 +120,9 @@ def main(
             if dcm_folder.is_dir():
                 shutil.rmtree(dcm_folder)
 
-    if group and preserve_folder_structure:
-        typer.secho("'--group' and '--preserve_folder_structure' are mutually excluding options", fg=typer.colors.BRIGHT_YELLOW)
-        raise typer.Abort()
+    # if group and preserve_folder_structure:
+    #     typer.secho("'--group' and '--preserve_folder_structure' are mutually excluding options", fg=typer.colors.BRIGHT_YELLOW)
+    #     raise typer.Abort()
 
     tol = TOL if tol is None else tol
 
@@ -133,6 +138,7 @@ def main(
         tol=tol,
         n_jobs=n_jobs,
         preserve_folder_structure=preserve_folder_structure,
+        keep_dcm_name_as_folder=keep_dcm_name_as_folder,
         relative_source_file=relative_source_file,
     )
 
