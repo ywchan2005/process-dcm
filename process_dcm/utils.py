@@ -315,24 +315,23 @@ def update_modality(dcm: FileDataset) -> bool:
                 dcm.Modality = ImageModality.SLO_INFRARED
             else:
                 dcm.Modality = ImageModality.UNKNOWN
-        elif " IR" in dcm.get("SeriesDescription", ""):
+        elif " IR" in dcm.get("SeriesDescription", "") or "IR" == dcm.SeriesDescription:
             dcm.Modality = ImageModality.SLO_INFRARED
         elif " BAF " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.AUTOFLUORESCENCE_BLUE
-        elif " ICGA " in dcm.get("SeriesDescription", ""):
-            dcm.Modality = ImageModality.INDOCYANINE_GREEN_ANGIOGRAPHY
         elif " FA&ICGA " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.FA_ICGA
-        elif " FA " in dcm.get("SeriesDescription", ""):
-            dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
-        elif " RF " in dcm.get("SeriesDescription", ""):
-            dcm.Modality = ImageModality.RED_FREE
         elif " BR " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.REFLECTANCE_BLUE
         elif " MColor " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.REFLECTANCE_MCOLOR
         else:
-            dcm.Modality = ImageModality.UNKNOWN
+            for predefined_modality in ImageModality:
+                if f" {predefined_modality.code} " in dcm.get("SeriesDescription", ""):
+                    dcm.Modality = predefined_modality
+                    break
+            else:
+                dcm.Modality = ImageModality.UNKNOWN
     else:
         return False  # Unsupported modality, continue
 
