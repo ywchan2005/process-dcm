@@ -90,6 +90,8 @@ class ImageModality(Enum):
     FDF = ("FDF", "Flicker Defined Form Perimetry")
     SAP = ("SAP", "Standard Automated Perimetry")
 
+    MP_IR = ('MP_IR', 'Microperimetry - Infrared', ModalityFlag.IS_2D_IMAGE)
+
     # Values which are not real images or may contain sensitive data.
     # Librarian will want to ignore these
     MPOD_RESULT = ("MPODR", "MP Optical Density Result")
