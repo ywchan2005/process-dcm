@@ -274,15 +274,18 @@ def update_modality(dcm: FileDataset) -> bool:
     """
     if dcm.get("Modality") is None:
         return False  # No modality, continue # no cov
-    elif dcm.Modality == "OPT":
+    elif (dcm.Modality == "OPT") and (dcm.get('SeriesDescription') not in [
+        'Angiography Report Analysis',
+    ]):
         dcm.Modality = ImageModality.OCT
     elif dcm.Modality == "OP":
-        if (dcm.Manufacturer.upper() == "TOPCON") or (dcm.get("ManufacturerModelName").upper() == "TRITON"):
+        manufacturer = dcm.get('Manufacturer', '').upper()
+        if (manufacturer == "TOPCON") or (dcm.get("ManufacturerModelName", '').upper() == "TRITON"):
             if " IR" in dcm.get("SeriesDescription", ""):
                 dcm.Modality = ImageModality.INFRARED_PHOTO
             else:
                 dcm.Modality = ImageModality.COLOUR_PHOTO
-        elif dcm.Manufacturer.upper() == "OPTOS":
+        elif manufacturer == "OPTOS":
             if ("FA " in dcm.get("SeriesDescription", "") and any(
                 "Fluorescein" in str(item) for item in dcm.get("ContrastBolusAgentSequence", [])
             )) or ("FA" in dcm.ImageType):
@@ -302,20 +305,20 @@ def update_modality(dcm: FileDataset) -> bool:
                 dcm.Modality = ImageModality.UNKNOWN_ULTRAWIDEFIELD
             else:
                 dcm.Modality = ImageModality.UNKNOWN
-        elif "ZEISS" in dcm.Manufacturer.upper():
+        elif "ZEISS" in manufacturer:
             if ("COLOR" in dcm.ImageType):
                 dcm.Modality = ImageModality.COLOUR_PHOTO
-            elif ("FA" in dcm.ImageType):
-                dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
             elif ("FAFGREEN" in dcm.ImageType):
                 dcm.Modality = ImageModality.AUTOFLUORESCENCE_GREEN
             elif ("FAFBLUE" in dcm.ImageType):
                 dcm.Modality = ImageModality.AUTOFLUORESCENCE_BLUE
+            elif ("FA" in dcm.ImageType):
+                dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
             elif ("IR" in dcm.ImageType):
                 dcm.Modality = ImageModality.SLO_INFRARED
             else:
                 dcm.Modality = ImageModality.UNKNOWN
-        elif " IR" in dcm.get("SeriesDescription", "") or "IR" == dcm.SeriesDescription:
+        elif " IR" in dcm.get("SeriesDescription", "") or "IR" == dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.SLO_INFRARED
         elif " BAF " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.AUTOFLUORESCENCE_BLUE
@@ -326,13 +329,21 @@ def update_modality(dcm: FileDataset) -> bool:
         elif " MColor " in dcm.get("SeriesDescription", ""):
             dcm.Modality = ImageModality.REFLECTANCE_MCOLOR
         else:
-            for predefined_modality in ImageModality:
-                if f" {predefined_modality.code} " in dcm.get("SeriesDescription", ""):
-                    dcm.Modality = predefined_modality
-                    break
-            else:
-                dcm.Modality = ImageModality.UNKNOWN
+            dcm.Modality = ImageModality.UNKNOWN
     else:
+        dcm.Modality = ImageModality.UNKNOWN
+
+    if dcm.Modality == ImageModality.UNKNOWN:
+        for predefined_modality in ImageModality:
+            if f" {predefined_modality.code} " in dcm.get("SeriesDescription", "") or predefined_modality.code in dcm.ImageType:
+                dcm.Modality = predefined_modality
+                break
+        else:
+            if 'FAG' in dcm.ImageType:
+                dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
+            elif dcm.get('Manufacturer') == 'Carl Zeiss Meditec AG':
+                dcm.Modality = ImageModality.FLUORESCEIN_ANGIOGRAPHY
+    if dcm.Modality == ImageModality.UNKNOWN:
         return False  # Unsupported modality, continue
 
     return True  # Modality updated successfully
