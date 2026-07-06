@@ -330,7 +330,39 @@ def update_modality(dcm: FileDataset) -> bool:
             dcm.Modality = ImageModality.REFLECTANCE_MCOLOR
         else:
             dcm.Modality = ImageModality.UNKNOWN
-    else:
+    elif dcm.get('Modality') == 'PR':
+        print(f'check unsupported modality {dcm.Modality}')
+        dcm.Modality = ImageModality.UNKNOWN
+    elif dcm.get('Modality') == 'OT' and dcm.get('SOPClassUID') in [
+        '1.2.840.10008.5.1.4.1.1.7.2', # Multi-frame Grayscale Byte Secondary Capture Image Storage
+        '1.2.840.10008.5.1.4.1.1.7', # Secondary Capture Image Storage
+    ]:
+        dcm.Modality = ImageModality.CORNEA_MICROSCOPY
+    elif dcm.get('Modality') == 'OT' and dcm.get('SOPClassUID') in [
+        '1.2.840.10008.5.1.4.1.1.66',
+    ]:
+        elem = dcm[(0x0051, 0x1013)]
+        idx = elem.value.find(b'\xff\xd8\xff') # JPG
+        if idx >= 0:
+            import io
+            from pydicom.uid import JPEGBaseline8Bit, JPEGLossless
+            from pydicom.encaps import encapsulate
+            dcm.file_meta.TransferSyntaxUID = JPEGLossless
+            dcm.PixelData = encapsulate([elem.value[idx:]])
+            width, height = Image.open(io.BytesIO(elem.value[idx:])).size
+            dcm.Rows = height
+            dcm.Columns = width
+            dcm.PhotometricInterpretation = "MONOCHROME2"
+            dcm.SamplesPerPixel = 1
+            dcm.BitsAllocated = 8
+            dcm.BitsStored = 8
+            dcm.PixelRepresentation = 0
+            dcm.Modality = ImageModality.CORNEA_MICROSCOPY
+
+            for elem in dcm.literal():
+                print('\t', elem)
+        else:
+            dcm.Modality = ImageModality.UNKNOWN
         dcm.Modality = ImageModality.UNKNOWN
 
     if dcm.Modality == ImageModality.UNKNOWN:
@@ -457,6 +489,7 @@ def process_dcm_images(
     os.makedirs(target_dir, exist_ok=True)
 
     for dcmO in dcm_objs:
+        assert hasattr(dcmO, 'pixel_array'), f'{dcmO.ReferencedFileID}, {dcmO.Modality}'
         arr = dcmO.pixel_array
 
         if dcmO.NumberOfFrames == 1:
